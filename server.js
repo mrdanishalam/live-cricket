@@ -8,173 +8,211 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
-let score = 0;
+let totalScore = 0;
 let wickets = 0;
 let balls = 0;
 
-let striker = {
-  name: "Danish",
-  runs: 0,
-  balls: 0,
-  fours: 0,
-  sixes: 0
-};
-
-let nonStriker = {
-  name: "Rahman",
-  runs: 0,
-  balls: 0,
-  fours: 0,
-  sixes: 0
-};
-
-let bowler = {
-  name: "Sahil",
-  overs: 0,
-  runs: 0,
-  wickets: 0
-};
-
-let batting = [striker, nonStriker];
-let bowling = [bowler];
+let batting = [];
+let bowling = [];
 
 let commentary = [];
-let lastOver = [];
 
-function oversFormat() {
-  return `${Math.floor(balls / 6)}.${balls % 6}`;
+function oversFormat(){
+  return `${Math.floor(balls/6)}.${balls%6}`;
 }
 
-function runRate() {
-  const overs = balls / 6 || 1;
-  return (score / overs).toFixed(2);
+function runRate(){
+  const overs = balls/6 || 1;
+  return (totalScore/overs).toFixed(2);
 }
 
-function emitScore() {
+function emitScore(){
 
-  io.emit("score-update", {
+  io.emit("score-update",{
 
-    team1: "Team Hassan",
-    team2: "Royal Tigers",
+    team1:"Team Hassan",
+    team2:"Royal Tigers",
 
-    score: `${score}/${wickets}`,
+    score:`${totalScore}/${wickets}`,
 
-    overs: oversFormat(),
+    overs:oversFormat(),
 
-    currentRunRate: runRate(),
-
-    striker,
-    nonStriker,
-    bowler,
+    rr:runRate(),
 
     batting,
     bowling,
 
-    commentary,
-    lastOver
+    commentary
 
   });
 
 }
 
-io.on("connection", (socket) => {
+io.on("connection",(socket)=>{
 
   emitScore();
 
-  socket.on("run", (run) => {
+  socket.on("run",(data)=>{
 
-    score += run;
+    const run = data.run;
 
-    striker.runs += run;
-    striker.balls += 1;
+    totalScore += run;
+
+    balls++;
+
+    // batsman
+
+    let batsman =
+    batting.find(
+      p => p.name === data.striker
+    );
+
+    if(!batsman){
+
+      batsman = {
+
+        name:data.striker,
+        runs:0,
+        balls:0,
+        fours:0,
+        sixes:0,
+        status:"not out"
+
+      };
+
+      batting.push(batsman);
+
+    }
+
+    batsman.runs += run;
+    batsman.balls++;
+
+    if(run === 4) batsman.fours++;
+    if(run === 6) batsman.sixes++;
+
+    // bowler
+
+    let bowler =
+    bowling.find(
+      b => b.name === data.bowler
+    );
+
+    if(!bowler){
+
+      bowler = {
+
+        name:data.bowler,
+        overs:0,
+        runs:0,
+        wickets:0
+
+      };
+
+      bowling.push(bowler);
+
+    }
 
     bowler.runs += run;
 
-    balls++;
-
-    if(run === 4) striker.fours++;
-    if(run === 6) striker.sixes++;
-
-    lastOver.push(run);
-
-    commentary.unshift(`🏏 ${striker.name} scored ${run} run`);
-
-    if(run % 2 !== 0){
-      [striker, nonStriker] =
-      [nonStriker, striker];
-    }
-
     if(balls % 6 === 0){
-
       bowler.overs++;
-
-      [striker, nonStriker] =
-      [nonStriker, striker];
-
-      lastOver = [];
-
     }
+
+    commentary.unshift(
+      `🏏 ${data.striker} scored ${run}`
+    );
 
     emitScore();
 
   });
 
-  socket.on("dot", () => {
-
-    striker.balls += 1;
+  socket.on("dot",(data)=>{
 
     balls++;
 
-    lastOver.push(".");
+    let batsman =
+    batting.find(
+      p => p.name === data.striker
+    );
 
-    commentary.unshift(`🛑 Dot Ball`);
+    if(!batsman){
 
-    if(balls % 6 === 0){
+      batsman = {
 
-      bowler.overs++;
+        name:data.striker,
+        runs:0,
+        balls:0,
+        fours:0,
+        sixes:0,
+        status:"not out"
 
-      [striker, nonStriker] =
-      [nonStriker, striker];
+      };
 
-      lastOver = [];
+      batting.push(batsman);
 
     }
+
+    batsman.balls++;
+
+    commentary.unshift(
+      `🛑 Dot Ball by ${data.bowler}`
+    );
 
     emitScore();
 
   });
 
-  socket.on("wicket", () => {
+  socket.on("wicket",(data)=>{
 
     wickets++;
 
     balls++;
 
-    striker.balls++;
+    let batsman =
+    batting.find(
+      p => p.name === data.striker
+    );
+
+    if(batsman){
+      batsman.status = "out";
+      batsman.balls++;
+    }
+
+    let bowler =
+    bowling.find(
+      b => b.name === data.bowler
+    );
+
+    if(!bowler){
+
+      bowler = {
+
+        name:data.bowler,
+        overs:0,
+        runs:0,
+        wickets:0
+
+      };
+
+      bowling.push(bowler);
+
+    }
 
     bowler.wickets++;
 
-    lastOver.push("W");
-
     commentary.unshift(
-      `❌ OUT! ${striker.name}`
+      `❌ OUT! ${data.striker}`
     );
-
-    striker = {
-      name: "New Batsman",
-      runs: 0,
-      balls: 0,
-      fours: 0,
-      sixes: 0
-    };
-
-    batting.push(striker);
 
     emitScore();
 
   });
 
 });
-server.listen(3000, () => {
+
+const PORT =
+process.env.PORT || 3000;
+
+server.listen(PORT,()=>{
   console.log("Running...");
 });

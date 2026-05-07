@@ -1,7 +1,6 @@
 {
-  "name": "live-cricket-stream",
+  "name": "live-cricket",
   "version": "1.0.0",
-  "description": "Live cricket streaming and score website",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

@@ -4,6 +4,9 @@
 
 <title>Scorer Panel</title>
 
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
 <link rel="stylesheet" href="style.css">
 
 </head>
@@ -16,21 +19,49 @@
 
 <h1>🏏 LIVE SCORER</h1>
 
+<input
+id="playerName"
+placeholder="Add Player">
+
+<button onclick="addPlayer()">
+Add Player
+</button>
+
+<br><br>
+
+<select id="striker"></select>
+
+<select id="bowler"></select>
+
 <div class="score-buttons">
 
-<button onclick="run(0)">DOT</button>
+<button onclick="dotBall()">
+DOT
+</button>
 
-<button onclick="run(1)">1</button>
+<button onclick="run(1)">
+1
+</button>
 
-<button onclick="run(2)">2</button>
+<button onclick="run(2)">
+2
+</button>
 
-<button onclick="run(3)">3</button>
+<button onclick="run(3)">
+3
+</button>
 
-<button onclick="run(4)">4</button>
+<button onclick="run(4)">
+4
+</button>
 
-<button onclick="run(6)">6</button>
+<button onclick="run(6)">
+6
+</button>
 
-<button onclick="wicket()">WICKET</button>
+<button onclick="wicket()">
+WICKET
+</button>
 
 </div>
 

@@ -1,68 +1,128 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Broadcast</title>
+
+<title>Broadcast</title>
+
 </head>
+
 <body>
 
-<h1>Broadcasting...</h1>
-
-<video id="video" autoplay muted playsinline></video>
+<video
+id="video"
+autoplay
+muted
+playsinline
+style="width:100%">
+</video>
 
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
 
 const socket = io();
-const video = document.getElementById("video");
+
+const video =
+document.getElementById("video");
 
 const peerConnections = {};
+
 const config = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" }
-  ]
+
+iceServers:[
+{
+urls:"stun:stun.l.google.com:19302"
+}
+]
+
 };
 
-navigator.mediaDevices.getUserMedia({
-  video: true,
-  audio: true
-}).then(stream => {
+navigator.mediaDevices
+.getUserMedia({
 
-  video.srcObject = stream;
+video:true,
+audio:true
 
-  socket.emit("broadcaster");
+})
+.then(stream=>{
 
-  socket.on("watcher", id => {
+video.srcObject = stream;
 
-    const peerConnection = new RTCPeerConnection(config);
+setTimeout(()=>{
 
-    peerConnections[id] = peerConnection;
+socket.emit("broadcaster");
 
-    stream.getTracks().forEach(track =>
-      peerConnection.addTrack(track, stream)
-    );
+},1000);
 
-    peerConnection.onicecandidate = event => {
-      if(event.candidate){
-        socket.emit("candidate", id, event.candidate);
-      }
-    };
+socket.on("watcher",id=>{
 
-    peerConnection.createOffer()
-      .then(sdp => peerConnection.setLocalDescription(sdp))
-      .then(() => {
-        socket.emit("offer", id, peerConnection.localDescription);
-      });
+const peerConnection =
+new RTCPeerConnection(config);
 
-  });
+peerConnections[id] =
+peerConnection;
 
-  socket.on("answer", (id, description) => {
-    peerConnections[id].setRemoteDescription(description);
-  });
+stream.getTracks().forEach(track=>
+peerConnection.addTrack(
+track,
+stream
+)
+);
 
-  socket.on("candidate", (id, candidate) => {
-    peerConnections[id].addIceCandidate(new RTCIceCandidate(candidate));
-  });
+peerConnection.onicecandidate =
+event=>{
+
+if(event.candidate){
+
+socket.emit(
+"candidate",
+id,
+event.candidate
+);
+
+}
+
+};
+
+peerConnection
+.createOffer()
+.then(sdp=>
+peerConnection
+.setLocalDescription(sdp)
+)
+.then(()=>{
+
+socket.emit(
+"offer",
+id,
+peerConnection.localDescription
+);
+
+});
+
+});
+
+socket.on(
+"answer",
+(id,description)=>{
+
+peerConnections[id]
+.setRemoteDescription(
+description
+);
+
+});
+
+socket.on(
+"candidate",
+(id,candidate)=>{
+
+peerConnections[id]
+.addIceCandidate(
+new RTCIceCandidate(candidate)
+);
+
+});
 
 });
 

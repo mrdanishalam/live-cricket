@@ -2,13 +2,14 @@
 <html>
 <head>
 
-  <title>🏏 LIVE CRICKET</title>
+<title>🏏 LIVE CRICKET</title>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css">
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700;800&display=swap" rel="stylesheet">
 
 </head>
 
@@ -16,84 +17,72 @@
 
 <div class="container">
 
-  <!-- NAVBAR -->
+<div class="navbar">
 
-  <div class="navbar">
+<div class="logo">
+STS LIVE
+</div>
 
-      <div class="logo">
-        STS LIVE
-      </div>
+<div class="live-badge">
+● LIVE
+</div>
 
-      <div class="live-badge">
-        ● LIVE
-      </div>
+</div>
 
-  </div>
+<div class="hero">
 
-  <!-- HERO -->
+<div class="video-card">
 
-  <div class="hero">
+<video
+id="video"
+autoplay
+playsinline
+controls>
+</video>
 
-      <!-- VIDEO -->
+</div>
 
-      <div class="video-card">
+<div class="score-panel">
 
-          <video
-            id="video"
-            autoplay
-            playsinline
-            controls>
-          </video>
+<div class="score-card">
 
-      </div>
+<div class="match-title"
+id="teams">
 
-      <!-- SCORE -->
+Team Hassan vs Royal Tigers
 
-      <div class="score-panel">
+</div>
 
-          <div class="score-card">
+<div class="score"
+id="score">
 
-              <div class="match-title" id="teams">
-                Team Hassan vs Royal Tigers
-              </div>
+0/0
 
-              <div class="score" id="score">
-                0/0
-              </div>
+</div>
 
-              <div class="overs" id="overs">
-                0.0 Overs
-              </div>
+<div class="overs"
+id="overs">
 
-              <div class="info-grid">
+0.0 Overs
 
-                  <div class="info-box">
-                      <h4>Batsman</h4>
-                      <p id="batsman">Danish</p>
-                  </div>
+</div>
 
-                  <div class="info-box">
-                      <h4>Bowler</h4>
-                      <p id="bowler">Rahman</p>
-                  </div>
+<div class="info-grid">
 
-                  <div class="info-box">
-                      <h4>Run Rate</h4>
-                      <p id="rr">0.00</p>
-                  </div>
+<div class="info-box">
+<h4>Run Rate</h4>
+<p id="rr">0.00</p>
+</div>
 
-                  <div class="info-box">
-                      <h4>Status</h4>
-                      <p>1st Innings</p>
-                  </div>
+</div>
 
-              </div>
+</div>
 
-          </div>
+</div>
 
-      </div>
+</div>
 
-  </div>
+<!-- BATTING -->
 
 <div class="table-card">
 
@@ -102,14 +91,16 @@
 <table>
 
 <thead>
+
 <tr>
 <th>Player</th>
 <th>R</th>
 <th>B</th>
 <th>4s</th>
 <th>6s</th>
-<th>SR</th>
+<th>Status</th>
 </tr>
+
 </thead>
 
 <tbody id="battingTable">
@@ -119,6 +110,8 @@
 
 </div>
 
+<!-- BOWLING -->
+
 <div class="table-card">
 
 <h2>🎯 Bowling</h2>
@@ -126,13 +119,14 @@
 <table>
 
 <thead>
+
 <tr>
 <th>Bowler</th>
 <th>O</th>
 <th>R</th>
 <th>W</th>
-<th>ECO</th>
 </tr>
+
 </thead>
 
 <tbody id="bowlingTable">
@@ -142,32 +136,20 @@
 
 </div>
 
+<!-- COMMENTARY -->
 
-  <!-- COMMENTARY -->
+<div class="commentary">
 
-  <div class="commentary">
+<h2>📢 Commentary</h2>
 
-      <h2>📢 Live Commentary</h2>
+<div id="commentaryBox"></div>
 
-      <div class="comment">
-        Welcome to the live match coverage.
-      </div>
-
-      <div class="comment">
-        Toss won by Team Hassan.
-      </div>
-
-  </div>
-
-  <!-- FOOTER -->
-
-  <div class="footer">
-      Powered By CodeWarrior Labs ⚙️🔥
-  </div>
+</div>
 
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+
 <script src="app.js"></script>
 
 </body>
