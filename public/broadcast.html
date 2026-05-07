@@ -4,6 +4,21 @@
 
 <title>Broadcast</title>
 
+<style>
+
+body{
+margin:0;
+background:black;
+}
+
+video{
+width:100%;
+height:100vh;
+object-fit:cover;
+}
+
+</style>
+
 </head>
 
 <body>
@@ -12,8 +27,7 @@
 id="video"
 autoplay
 muted
-playsinline
-style="width:100%">
+playsinline>
 </video>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -29,103 +43,100 @@ const peerConnections = {};
 
 const config = {
 
-iceServers:[
-{
-urls:"stun:stun.l.google.com:19302"
-}
-]
+  iceServers:[
+    {
+      urls:"stun:stun.l.google.com:19302"
+    }
+  ]
 
 };
 
 navigator.mediaDevices
 .getUserMedia({
 
-video:true,
-audio:true
+  video:true,
+  audio:true
 
 })
 .then(stream=>{
 
-video.srcObject = stream;
+  video.srcObject = stream;
 
-setTimeout(()=>{
+  socket.emit("broadcaster");
 
-socket.emit("broadcaster");
+  socket.on(
+    "watcher",
+    async id=>{
 
-},1000);
+      const peerConnection =
+      new RTCPeerConnection(config);
 
-socket.on("watcher",id=>{
+      peerConnections[id] =
+      peerConnection;
 
-const peerConnection =
-new RTCPeerConnection(config);
+      stream.getTracks()
+      .forEach(track=>{
 
-peerConnections[id] =
-peerConnection;
+        peerConnection
+        .addTrack(track,stream);
 
-stream.getTracks().forEach(track=>
-peerConnection.addTrack(
-track,
-stream
-)
-);
+      });
 
-peerConnection.onicecandidate =
-event=>{
+      const offer =
+      await peerConnection
+      .createOffer();
 
-if(event.candidate){
+      await peerConnection
+      .setLocalDescription(
+        offer
+      );
 
-socket.emit(
-"candidate",
-id,
-event.candidate
-);
+      socket.emit(
+        "offer",
+        id,
+        peerConnection.localDescription
+      );
 
-}
+      peerConnection.onicecandidate =
+      event=>{
 
-};
+        if(event.candidate){
 
-peerConnection
-.createOffer()
-.then(sdp=>
-peerConnection
-.setLocalDescription(sdp)
-)
-.then(()=>{
+          socket.emit(
+            "candidate",
+            id,
+            event.candidate
+          );
 
-socket.emit(
-"offer",
-id,
-peerConnection.localDescription
-);
+        }
 
-});
+      };
 
-});
+  });
 
-socket.on(
-"answer",
-(id,description)=>{
+  socket.on(
+    "answer",
+    (id,description)=>{
 
-peerConnections[id]
-.setRemoteDescription(
-description
-);
+      peerConnections[id]
+      .setRemoteDescription(
+        description
+      );
 
-});
+  });
 
-socket.on(
-"candidate",
-(id,candidate)=>{
+  socket.on(
+    "candidate",
+    (id,candidate)=>{
 
-peerConnections[id]
-.addIceCandidate(
-new RTCIceCandidate(candidate)
-);
+      peerConnections[id]
+      .addIceCandidate(
+        new RTCIceCandidate(candidate)
+      );
 
-});
+  });
 
 });
-
 </script>
 
 </body>

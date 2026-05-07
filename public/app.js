@@ -7,176 +7,83 @@ let peerConnection;
 
 const config = {
 
-iceServers:[
-{
-urls:"stun:stun.l.google.com:19302"
-}
-]
+  iceServers:[
+    {
+      urls:"stun:stun.l.google.com:19302"
+    }
+  ]
 
 };
-
-socket.on("broadcaster",()=>{
 
 socket.emit("watcher");
 
-});
-
 socket.on(
-"offer",
-(id,description)=>{
+  "offer",
+  async (id,description)=>{
 
-peerConnection =
-new RTCPeerConnection(config);
+    peerConnection =
+    new RTCPeerConnection(config);
 
-peerConnection
-.setRemoteDescription(description)
-.then(()=>
-peerConnection.createAnswer()
-)
-.then(sdp=>
-peerConnection
-.setLocalDescription(sdp)
-)
-.then(()=>{
+    await peerConnection
+    .setRemoteDescription(
+      description
+    );
 
-socket.emit(
-"answer",
-id,
-peerConnection.localDescription
-);
+    const answer =
+    await peerConnection
+    .createAnswer();
 
-});
+    await peerConnection
+    .setLocalDescription(
+      answer
+    );
 
-peerConnection.ontrack =
-event=>{
+    socket.emit(
+      "answer",
+      id,
+      peerConnection.localDescription
+    );
 
-video.srcObject =
-event.streams[0];
+    peerConnection.ontrack =
+    event=>{
 
-};
+      console.log("TRACK RECEIVED");
 
-peerConnection.onicecandidate =
-event=>{
+      video.srcObject =
+      event.streams[0];
 
-if(event.candidate){
+      video.play();
 
-socket.emit(
-"candidate",
-id,
-event.candidate
-);
+    };
 
-}
+    peerConnection.onicecandidate =
+    event=>{
 
-};
+      if(event.candidate){
 
-});
+        socket.emit(
+          "candidate",
+          id,
+          event.candidate
+        );
 
-socket.on(
-"candidate",
-(id,candidate)=>{
+      }
 
-peerConnection
-.addIceCandidate(
-new RTCIceCandidate(candidate)
-);
+    };
 
 });
 
 socket.on(
-"score-update",
-(data)=>{
+  "candidate",
+  (id,candidate)=>{
 
-document
-.getElementById("score")
-.innerText = data.score;
+    if(peerConnection){
 
-document
-.getElementById("overs")
-.innerText =
-data.overs + " Overs";
+      peerConnection
+      .addIceCandidate(
+        new RTCIceCandidate(candidate)
+      );
 
-document
-.getElementById("rr")
-.innerText = data.rr;
-
-const battingTable =
-document.getElementById(
-"battingTable"
-);
-
-battingTable.innerHTML = "";
-
-data.batting.forEach(player=>{
-
-battingTable.innerHTML += `
-
-<tr>
-
-<td>${player.name}</td>
-
-<td>${player.runs}</td>
-
-<td>${player.balls}</td>
-
-<td>${player.fours}</td>
-
-<td>${player.sixes}</td>
-
-<td>${player.status}</td>
-
-</tr>
-
-`;
-
-});
-
-const bowlingTable =
-document.getElementById(
-"bowlingTable"
-);
-
-bowlingTable.innerHTML = "";
-
-data.bowling.forEach(player=>{
-
-bowlingTable.innerHTML += `
-
-<tr>
-
-<td>${player.name}</td>
-
-<td>${player.overs}</td>
-
-<td>${player.runs}</td>
-
-<td>${player.wickets}</td>
-
-</tr>
-
-`;
-
-});
-
-const commentaryBox =
-document.getElementById(
-"commentaryBox"
-);
-
-commentaryBox.innerHTML = "";
-
-data.commentary
-.slice(0,10)
-.forEach(c=>{
-
-commentaryBox.innerHTML += `
-
-<div class="comment">
-${c}
-</div>
-
-`;
-
-});
+    }
 
 });
