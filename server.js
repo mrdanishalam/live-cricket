@@ -3,34 +3,63 @@ const http = require("http");
 const { Server } = require("socket.io");
 
 const app = express();
+
 const server = http.createServer(app);
+
 const io = new Server(server);
 
 app.use(express.static("public"));
-let broadcaster;
+
+/* =========================
+   LIVE STREAM VARIABLES
+========================= */
+
+let broadcaster = null;
+
+/* =========================
+   MATCH VARIABLES
+========================= */
+
 let totalScore = 0;
+
 let wickets = 0;
+
 let balls = 0;
 
 let batting = [];
+
 let bowling = [];
 
 let commentary = [];
 
+/* =========================
+   HELPERS
+========================= */
+
 function oversFormat(){
-  return `${Math.floor(balls/6)}.${balls%6}`;
+
+  return `${Math.floor(balls / 6)}.${balls % 6}`;
+
 }
 
 function runRate(){
-  const overs = balls/6 || 1;
-  return (totalScore/overs).toFixed(2);
+
+  const overs = balls / 6 || 1;
+
+  return (totalScore / overs).toFixed(2);
+
 }
+
+/* =========================
+   SEND SCORE TO EVERYONE
+========================= */
 
 function emitScore(){
 
   io.emit("score-update",{
 
     team1:"Team Hassan",
+
     team2:"Royal Tigers",
 
     score:`${totalScore}/${wickets}`,
@@ -39,7 +68,13 @@ function emitScore(){
 
     rr:runRate(),
 
+    striker:
+    batting.length
+    ? batting[batting.length - 1].name
+    : "",
+
     batting,
+
     bowling,
 
     commentary
@@ -48,73 +83,121 @@ function emitScore(){
 
 }
 
+/* =========================
+   SOCKET CONNECTION
+========================= */
+
 io.on("connection",(socket)=>{
 
-socket.on(
-  "broadcaster",
-  ()=>{
+  console.log("User Connected");
 
-    broadcaster = socket.id;
+/* =========================
+   BROADCASTER
+========================= */
 
-  }
-);
+  socket.on(
+    "broadcaster",
+    ()=>{
 
-socket.on(
-  "watcher",
-  ()=>{
+      broadcaster = socket.id;
 
-    if(broadcaster){
-
-      socket.to(broadcaster)
-      .emit(
-        "watcher",
-        socket.id
+      console.log(
+        "Broadcaster Connected:",
+        broadcaster
       );
 
     }
+  );
 
-});
+/* =========================
+   WATCHER
+========================= */
 
-socket.on(
-  "offer",
-  (id,message)=>{
+  socket.on(
+    "watcher",
+    ()=>{
 
-    socket.to(id)
-    .emit(
-      "offer",
-      socket.id,
-      message
-    );
+      console.log(
+        "Watcher Joined:",
+        socket.id
+      );
 
-});
+      if(broadcaster){
 
-socket.on(
-  "answer",
-  (id,message)=>{
+        socket.to(broadcaster)
+        .emit(
+          "watcher",
+          socket.id
+        );
 
-    socket.to(id)
-    .emit(
-      "answer",
-      socket.id,
-      message
-    );
+      }
 
-});
+    }
+  );
 
-socket.on(
-  "candidate",
-  (id,message)=>{
+/* =========================
+   OFFER
+========================= */
 
-    socket.to(id)
-    .emit(
-      "candidate",
-      socket.id,
-      message
-    );
+  socket.on(
+    "offer",
+    (id,message)=>{
 
-});
+      socket.to(id)
+      .emit(
+        "offer",
+        socket.id,
+        message
+      );
+
+    }
+  );
+
+/* =========================
+   ANSWER
+========================= */
+
+  socket.on(
+    "answer",
+    (id,message)=>{
+
+      socket.to(id)
+      .emit(
+        "answer",
+        socket.id,
+        message
+      );
+
+    }
+  );
+
+/* =========================
+   ICE CANDIDATE
+========================= */
+
+  socket.on(
+    "candidate",
+    (id,message)=>{
+
+      socket.to(id)
+      .emit(
+        "candidate",
+        socket.id,
+        message
+      );
+
+    }
+  );
+
+/* =========================
+   SEND INITIAL SCORE
+========================= */
 
   emitScore();
+
+/* =========================
+   RUN EVENT
+========================= */
 
   socket.on("run",(data)=>{
 
@@ -124,7 +207,9 @@ socket.on(
 
     balls++;
 
-    // batsman
+    /* =========================
+       BATSMAN
+    ========================= */
 
     let batsman =
     batting.find(
@@ -136,10 +221,15 @@ socket.on(
       batsman = {
 
         name:data.striker,
+
         runs:0,
+
         balls:0,
+
         fours:0,
+
         sixes:0,
+
         status:"not out"
 
       };
@@ -149,12 +239,24 @@ socket.on(
     }
 
     batsman.runs += run;
+
     batsman.balls++;
 
-    if(run === 4) batsman.fours++;
-    if(run === 6) batsman.sixes++;
+    if(run === 4){
 
-    // bowler
+      batsman.fours++;
+
+    }
+
+    if(run === 6){
+
+      batsman.sixes++;
+
+    }
+
+    /* =========================
+       BOWLER
+    ========================= */
 
     let bowler =
     bowling.find(
@@ -166,8 +268,11 @@ socket.on(
       bowler = {
 
         name:data.bowler,
+
         overs:0,
+
         runs:0,
+
         wickets:0
 
       };
@@ -179,8 +284,14 @@ socket.on(
     bowler.runs += run;
 
     if(balls % 6 === 0){
+
       bowler.overs++;
+
     }
+
+    /* =========================
+       COMMENTARY
+    ========================= */
 
     commentary.unshift(
       `🏏 ${data.striker} scored ${run}`
@@ -189,6 +300,10 @@ socket.on(
     emitScore();
 
   });
+
+/* =========================
+   DOT BALL
+========================= */
 
   socket.on("dot",(data)=>{
 
@@ -204,10 +319,15 @@ socket.on(
       batsman = {
 
         name:data.striker,
+
         runs:0,
+
         balls:0,
+
         fours:0,
+
         sixes:0,
+
         status:"not out"
 
       };
@@ -226,6 +346,10 @@ socket.on(
 
   });
 
+/* =========================
+   WICKET
+========================= */
+
   socket.on("wicket",(data)=>{
 
     wickets++;
@@ -238,8 +362,11 @@ socket.on(
     );
 
     if(batsman){
+
       batsman.status = "out";
+
       batsman.balls++;
+
     }
 
     let bowler =
@@ -252,8 +379,11 @@ socket.on(
       bowler = {
 
         name:data.bowler,
+
         overs:0,
+
         runs:0,
+
         wickets:0
 
       };
@@ -272,11 +402,29 @@ socket.on(
 
   });
 
+/* =========================
+   DISCONNECT
+========================= */
+
+  socket.on("disconnect",()=>{
+
+    console.log("User Disconnected");
+
+  });
+
 });
+
+/* =========================
+   SERVER START
+========================= */
 
 const PORT =
 process.env.PORT || 3000;
 
 server.listen(PORT,()=>{
-  console.log("Running...");
+
+  console.log(
+    `Server Running On ${PORT}`
+  );
+
 });
