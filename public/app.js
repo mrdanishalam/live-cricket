@@ -1,5 +1,9 @@
 const socket = io();
 
+/* =========================
+   VIDEO
+========================= */
+
 const video =
 document.getElementById("video");
 
@@ -15,7 +19,15 @@ const config = {
 
 };
 
+/* =========================
+   WATCHER
+========================= */
+
 socket.emit("watcher");
+
+/* =========================
+   OFFER
+========================= */
 
 socket.on(
   "offer",
@@ -47,8 +59,6 @@ socket.on(
     peerConnection.ontrack =
     event=>{
 
-      console.log("TRACK RECEIVED");
-
       video.srcObject =
       event.streams[0];
 
@@ -73,6 +83,10 @@ socket.on(
 
 });
 
+/* =========================
+   ICE CANDIDATE
+========================= */
+
 socket.on(
   "candidate",
   (id,candidate)=>{
@@ -85,5 +99,129 @@ socket.on(
       );
 
     }
+
+});
+
+/* =========================
+   LIVE SCORE UPDATE
+========================= */
+
+socket.on(
+  "score-update",
+  (data)=>{
+
+    console.log(data);
+
+    /* =========================
+       SCORE
+    ========================= */
+
+    document
+    .getElementById("score")
+    .innerText = data.score;
+
+    document
+    .getElementById("overs")
+    .innerText =
+    data.overs + " Overs";
+
+    document
+    .getElementById("rr")
+    .innerText =
+    data.rr;
+
+    /* =========================
+       BATTING TABLE
+    ========================= */
+
+    const battingTable =
+    document.getElementById(
+      "battingTable"
+    );
+
+    battingTable.innerHTML = "";
+
+    data.batting.forEach(player=>{
+
+      battingTable.innerHTML += `
+
+      <tr>
+
+      <td>
+      ${player.name}
+      ${player.name === data.striker ? "⭐" : ""}
+      </td>
+
+      <td>${player.runs}</td>
+
+      <td>${player.balls}</td>
+
+      <td>${player.fours}</td>
+
+      <td>${player.sixes}</td>
+
+      <td>${player.status}</td>
+
+      </tr>
+
+      `;
+
+    });
+
+    /* =========================
+       BOWLING TABLE
+    ========================= */
+
+    const bowlingTable =
+    document.getElementById(
+      "bowlingTable"
+    );
+
+    bowlingTable.innerHTML = "";
+
+    data.bowling.forEach(player=>{
+
+      bowlingTable.innerHTML += `
+
+      <tr>
+
+      <td>${player.name}</td>
+
+      <td>${player.overs}</td>
+
+      <td>${player.runs}</td>
+
+      <td>${player.wickets}</td>
+
+      </tr>
+
+      `;
+
+    });
+
+    /* =========================
+       COMMENTARY
+    ========================= */
+
+    const commentaryBox =
+    document.getElementById(
+      "commentaryBox"
+    );
+
+    commentaryBox.innerHTML = "";
+
+    data.commentary
+    .slice(0,10)
+    .forEach(c=>{
+
+      commentaryBox.innerHTML += `
+
+      <div class="comment">
+      ${c}
+      </div>
+
+      `;
+
+    });
 
 });
